@@ -14,4 +14,4 @@ class app extends lapis.Application
     if @user and @user.admin
       if config and config.console and config.console\lower! == "true"
         require("lapis.console").make(env: "all")(@)
-    status: 401, "401 - Unauthorized"
+    return status: 401, "401 - Unauthorized"

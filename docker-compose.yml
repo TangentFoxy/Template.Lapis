@@ -3,24 +3,26 @@ version: '3.5'
 services:
   NAME:
     build: "."
-    image: USER/NAME:testing
+    image: USER/NAME:latest
     environment:
-      - SESSION_SECRET=${SESSION_SECRET:-CHANGEME}
-      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-postgres}
-      - ENABLE_CONSOLE=${ENABLE_CONSOLE:-false}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - ENABLE_CONSOLE=${ENABLE_CONSOLE}
     depends_on:
       - postgres
     ports:
-      - "8000:80"
-    restart: unless-stopped
+      - "80:80"
+    restart: always
 
   postgres:
     image: postgres-12.1-alpine
+    volumes:
+      - ./db:/var/lib/postgres/data
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-postgres}
-    restart: unless-stopped
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    restart: always

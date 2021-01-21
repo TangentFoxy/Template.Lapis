@@ -1,31 +1,37 @@
 import Model from require "lapis.db.model"
+config = require("lapis.config").get!
 
 class Users extends Model
   @constraints: {
-    -- digest cannot be checked here,
-    -- passwords must be checked before they are converted to digest
+    bcrypt_digest: (value) =>
+      -- password digest cannot be fully checked here
+      if not value or value\len! < 1
+        return "A password digest must exist."
 
     name: (value) =>
       if not value or value\len! < 1
-        return "You must enter a username."
+        return "Users must have a name."
 
       if value\len! > 255
-        return "Usernames must be 255 or fewer characters in length."
+        return "User names must be 255 or fewer bytes in length."
 
-      -- if value\find "%s"
-      --   return "Usernames cannot contain spaces."
+      if value\find "%s"
+        return "User names cannot contain spaces."
 
-      if value\lower! == "admin"
-        return "That username is unavailable."
+      if config.username_blacklist[value\lower!]
+        return "That name is unavailable."
 
       if Users\find name: value\lower!
-        return "That username is unavailable."
+        return "That name is unavailable."
 
     email: (value) =>
       if value
         if value\len! > 255
-          return "Email addresses must be 255 or fewer characters in length."
+          return "Email addresses must be 255 or fewer bytes in length."
 
         if value\find "%s"
           return "Email addresses cannot contain spaces."
+
+        if not value\match ".+@.+"
+          return "Email addresses must be valid."
   }

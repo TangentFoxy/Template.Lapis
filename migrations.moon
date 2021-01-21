@@ -6,7 +6,7 @@ import create_table, types from require "lapis.db.schema"
       { "id", types.serial primary_key: true }
       { "name", types.varchar unique: true }
       { "email", types.varchar null: true }
-      { "digest", types.varchar null: true }
+      { "bcrypt_digest", types.varchar }
       { "admin", types.boolean default: false }
     }
 }

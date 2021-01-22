@@ -2,6 +2,8 @@ import Model from require "lapis.db.model"
 config = require("lapis.config").get!
 
 class Users extends Model
+  @timestamp: true
+
   @constraints: {
     bcrypt_digest: (value) =>
       -- password digest cannot be fully checked here

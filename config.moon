@@ -19,4 +19,5 @@ config "production", ->
   app_name os.getenv("APP_NAME")
   username_blacklist hash "admin", "administrator", "me", "new", "list"
   bcrypt_digest_rounds os.getenv("BCRYPT_DISGEST_ROUNDS") or 9
+  recaptcha_secret os.getenv("RECAPTCHA_SECRET")
   console os.getenv("ENABLE_CONSOLE") or false

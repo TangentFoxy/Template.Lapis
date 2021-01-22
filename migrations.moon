@@ -8,5 +8,8 @@ import create_table, types from require "lapis.db.schema"
       { "email", types.varchar null: true }
       { "bcrypt_digest", types.varchar }
       { "admin", types.boolean default: false }
+
+      { "created_at", types.time }
+      { "updated_at", types.time }
     }
 }

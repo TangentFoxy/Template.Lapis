@@ -3,8 +3,11 @@ config = require("lapis.config").get!
 
 import Users from require "models"
 
-class app extends lapis.Application
+class MainApplication extends lapis.Application
   @before_filter =>
+    if @session.message
+      @message = @session.message
+      @session.message = nil
     if @session.id
       @user = Users\find id: @session.id
 

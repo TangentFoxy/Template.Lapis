@@ -1,6 +1,6 @@
 config = require "lapis.config"
 
-hash = (...) ->
+array_to_hash_table = (...) ->
   {item, true for item in *{...}}
 
 config "production", ->
@@ -17,7 +17,7 @@ config "production", ->
 
   -- custom configuration options
   app_name os.getenv("APP_NAME")
-  username_blacklist hash "admin", "administrator", "me", "new", "list"
+  username_blacklist array_to_hash_table "admin", "administrator", "me", "new", "list"
   bcrypt_digest_rounds os.getenv("BCRYPT_DISGEST_ROUNDS") or 9
   recaptcha_secret os.getenv("RECAPTCHA_SECRET")
   console os.getenv("ENABLE_CONSOLE") or false

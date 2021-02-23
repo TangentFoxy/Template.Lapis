@@ -4,6 +4,8 @@ config = require("lapis.config").get!
 import Users from require "models"
 
 class MainApplication extends lapis.Application
+  @include "applications.users"
+
   @before_filter =>
     if @session.message
       @message = @session.message
@@ -16,5 +18,7 @@ class MainApplication extends lapis.Application
   [console: "/console"]: =>
     if @user and @user.admin
       if config and config.console and config.console\lower! == "true"
-        require("lapis.console").make(env: "all")(@)
-    status: 401, render: "unauthorized"
+        return require("lapis.console").make(env: "all")(@)
+    return status: 401, render: "unauthorized"
+
+  [index: "/"]: => return "To be built."

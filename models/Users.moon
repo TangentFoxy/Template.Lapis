@@ -3,6 +3,7 @@ config = require("lapis.config").get!
 
 class Users extends Model
   @timestamp: true
+  @email_pattern: ".+@.+"
 
   @constraints: {
     bcrypt_digest: (value) =>
@@ -34,6 +35,6 @@ class Users extends Model
         if value\find "%s"
           return "Email addresses cannot contain spaces."
 
-        if not value\match ".+@.+"
+        if not value\match Users.email_pattern
           return "Email addresses must be valid."
   }

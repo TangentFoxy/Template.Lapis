@@ -11,11 +11,11 @@ import respond_to from require "lapis.application"
 import validate, validate_functions from require "lapis.validate"
 import trim from require "lapis.util"
 
-validate_functions.unique_user = (name) ->
-  return not Users\find :name
-validate_functions.not_one_of = (...) ->
-  return not validate_functions.one_of(...)
-validate_functions.max_repetitions = (input, max) ->
+validate_functions.unique_user = (input) ->
+  return not Users\find name: input
+validate_functions.not_one_of = (input, hash_table) ->
+  return not hash_table[input]
+validate_functions.max_repetition = (input, max) ->
   repeats = {}
   for i = 1, #input
     character = input\sub i, i
@@ -32,19 +32,17 @@ class UsersApplication extends lapis.Application
   @path: "/users"
   @name: "users_"
 
-  views_prefix: "views.users"
-
   [new: "/new"]: respond_to {
     GET: =>
       if @user
-        @session.message = "You are logged into an account already."
-        redirect_to: @params.redirect or @url_for "users_me"
+        @session.message = "You are already logged in."
+        return redirect_to: @params.redirect or @url_for "users_me"
       @csrf_token = csrf.generate_token(@)
-      render: true
+      render: "users.new"
     POST: =>
       unless csrf.validate_token(@)
         @session.message = "Invalid CSRF token, please try again."
-        redirect_to: @params.redirect or @url_for "users_new"
+        return redirect_to: @params.redirect or @url_for "users_new"
       if config.recaptcha_secret and config.recaptcha_secret\len! > 1
         response = decode http.simple "https://www.google.com/recaptcha/api/siteverify", {
           secret: config.recaptcha_secret
@@ -52,26 +50,83 @@ class UsersApplication extends lapis.Application
         }
         unless response.success
           @session.message = "You failed the reCAPTCHA challenge, please try again."
-          redirect_to: @params.redirect or @url_for "users_new"
+          return redirect_to: @params.redirect or @url_for "users_new"
       if errors = validate @params, {
-        { "name", exists: true, unique_user: true, not_one_of: config.username_blacklist }
-        { "password", exists: true, min_length: 12, max_repetitions: 6 }
+        { "name", exists: true, max_length: 255, matches_pattern: "%S+", unique_user: true, not_one_of: {config.username_blacklist} }
+        { "password", exists: true, min_length: 12, max_repetition: 6 }
+        { "email", min_length: 3, max_length: 255, matches_pattern: Users.email_pattern, optional: true }
       }
         @session.message = table.concat errors, ", "
-        redirect_to: @params.redirect or @url_for "users_new"
+        return redirect_to: @params.redirect or @url_for "users_new"
 
       bcrypt_digest = bcrypt.digest @params.password, config.bcrypt_digest_rounds
-      user = Users\create {
+      user, err = Users\create {
         name: trim @params.name
-        email: if @params.email
+        email: if @params.email and #@params.email > 0
           trim @params.email
         :bcrypt_digest
         admin: not Users\find admin: true
       }
+      unless user
+        @session.message = err
+        return redirect_to: @url_for "users_new", nil, redirect: @params.redirect
 
       @session.id = user.id
       @session.message = "Account created. Welcome, #{user.name}!"
-      redirect_to: @params.redirect or @url_for "users_me"
+      return redirect_to: @params.redirect or @url_for "users_me"
   }
 
-  [users_me: "/me"]: => "TODO"
+  [login: "/login"]: respond_to {
+    GET: =>
+      if @user
+        @session.message = "You are already logged in."
+        redirect_to: @params.redirect or @url_for "users_me"
+      @csrf_token = csrf.generate_token(@)
+      return render: "users.login"
+    POST: =>
+      unless csrf.validate_token(@)
+        @session.message = "Invalid CSRF token, please try again."
+        return redirect_to: @url_for "users_login", nil, redirect: @params.redirect
+      if user = Users\find name: trim @params.name
+        if bcrypt.verify @params.password, user.bcrypt_digest
+          @session.id = user.id
+          @session.message = "You have been logged in."
+          return redirect_to: @params.redirect or @url_for "index"
+
+      @session.message = "Incorrect credentials, please try again."
+      return redirect_to: @url_for "users_login", nil, redirect: @params.redirect
+  }
+
+  [me: "/me"]: respond_to {
+    GET: =>
+      unless @user
+        @session.message = "You are not logged in."
+        return redirect_to: @url_for "users_login", nil, redirect: @params.redirect
+      @csrf_token = csrf.generate_token(@)
+      return render: "users.me"
+    POST: =>
+      unless csrf.validate_token(@)
+        @session.message = "Invalid CSRF token, please try again."
+        return redirect_to: @url_for "users_me", nil, redirect: @params.redirect
+      if errors = validate @params, {
+        { "name", exists: true, max_length: 255, unique_user: true, not_one_of: config.username_blacklist, optional: true }
+        { "password", exists: true, min_length: 12, max_repetition: 6, optional: true }
+        { "email", min_length: 3, max_length: 255, matches_pattern: Users.email_pattern, optional: true }
+      }
+        @session.message = table.concat errors, ", "
+        return redirect_to: @url_for "users_new", nil, redirect: @params.redirect
+
+      if @params.password
+        bcrypt_digest = bcrypt.digest @params.password, config.bcrypt_digest_rounds
+      @user\update {
+        name: if @params.name and #@params.name > 0
+          trim @params.name
+        email: if @params.email and #@params.email > 0
+          trim @params.email
+        :bcrypt_digest
+      }
+
+      @session.id = user.id
+      @session.message = "Account updated!"
+      return redirect_to: @params.redirect or @url_for "users_me"
+  }

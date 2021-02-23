@@ -1,17 +1,10 @@
 version: '3.5'
 
 services:
-  NAME:
+  app-name:
     build: "."
-    image: USER/NAME:latest
-    # environment:
-    #   - SESSION_SECRET=${SESSION_SECRET}
-    #   - POSTGRES_HOST=${POSTGRES_HOST}
-    #   - POSTGRES_USER=${POSTGRES_USER}
-    #   - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    #   - POSTGRES_DB=${POSTGRES_DB}
-    #   - ENABLE_CONSOLE=${ENABLE_CONSOLE}
-    #   - RECAPTCHA_SECRET=${RECAPTCHA_SECRET}
+    # image: USER/NAME:latest
+    env_file: .env
     depends_on:
       - postgres
     ports:
@@ -19,11 +12,8 @@ services:
     restart: always
 
   postgres:
-    image: postgres-12.1-alpine
+    image: postgres:12.6-alpine
+    env_file: .env
     volumes:
       - ./db:/var/lib/postgres/data
-    # environment:
-    #   - POSTGRES_USER=${POSTGRES_USER}
-    #   - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    #   - POSTGRES_DB=${POSTGRES_DB}
     restart: always

@@ -12,7 +12,7 @@ config "production", ->
   postgres ->
     host os.getenv("POSTGRES_HOST") or "postgres"
     user os.getenv("POSTGRES_USER") or "postgres"
-    password os.getenv("POSTGRES_PASSWORD") or "" -- using a blank password is untested
+    password os.getenv("POSTGRES_PASSWORD") -- a blank password will not work
     database os.getenv("POSTGRES_DB") or "postgres"
 
   -- custom configuration options
